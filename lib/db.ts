@@ -24,17 +24,11 @@ export async function query<T extends Record<string, unknown>>(
     });
     return (await globals.cinePool.query(sql, values)).rows as T[];
   }
-  if (
-    process.env.NODE_ENV === "production" &&
-    process.env.ALLOW_SQLITE_PREVIEW !== "true"
-  ) {
-    throw new Error(
-      "Set DATABASE_URL for production, or ALLOW_SQLITE_PREVIEW=true for a local preview.",
-    );
-  }
   if (!globals.cineSqlite) {
-    mkdirSync(resolve(".data"), { recursive: true });
-    globals.cineSqlite = new DatabaseSync(resolve(".data/cine.sqlite"));
+    const isVercel = Boolean(process.env.VERCEL);
+    const dbDir = isVercel ? "/tmp" : resolve(".data");
+    mkdirSync(dbDir, { recursive: true });
+    globals.cineSqlite = new DatabaseSync(`${dbDir}/cine.sqlite`);
     globals.cineSqlite.exec(
       "PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;",
     );

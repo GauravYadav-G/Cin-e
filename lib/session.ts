@@ -21,9 +21,7 @@ export async function viewer() {
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
-    secure:
-      process.env.NODE_ENV === "production" &&
-      process.env.ALLOW_SQLITE_PREVIEW !== "true",
+    secure: process.env.NODE_ENV === "production",
   });
   return { id, name: "Film lover" };
 }

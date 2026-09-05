@@ -77,7 +77,7 @@ export default function HomeHero() {
   return (
     <section
       ref={section}
-      className="home-hero home-hero-refined"
+      className="home-hero"
       aria-label="Featured films"
       aria-roledescription="carousel"
       onMouseEnter={() => setInteracting(true)}
@@ -127,7 +127,7 @@ export default function HomeHero() {
       <div className="home-shade" />
       <div className="home-hero-content">
         <span className="eyebrow accent">
-          <i className="status-dot" /> CINEMA, CAREFULLY CHOSEN
+          <i className="status-dot" /> THE CINÉ SELECTION / 00{index + 1}
         </span>
         <h1>
           Some stories
@@ -135,9 +135,8 @@ export default function HomeHero() {
           stay with you.
         </h1>
         <p>
-          Singular voices. Unforgettable worlds.
-          <br />
-          Find a film worth your evening.
+          Extraordinary films. Singular voices.
+          <br />A little less scrolling. A little more feeling.
         </p>
         <div className="home-hero-actions">
           <Link
@@ -145,7 +144,7 @@ export default function HomeHero() {
             href={`/collection?film=${film.id}`}
             aria-label={`Discover ${film.title}`}
           >
-            <Play size={15} fill="currentColor" /> Discover the film
+            <Play size={15} fill="currentColor" /> Discover {film.title}
           </Link>
           <Link className="hero-secondary" href="/browse">
             Explore all films <ArrowUpRight size={16} />
@@ -153,53 +152,32 @@ export default function HomeHero() {
         </div>
       </div>
       <div className="home-feature-label">
-        <span>
-          IN THE SPOTLIGHT <i /> {String(index + 1).padStart(2, "0")}
-        </span>
+        <span>FEATURED FILM</span>
         <strong>{film.title}</strong>
         <p>
-          {film.year} <span>·</span> {film.genres[0]} <span>·</span>{" "}
-          {runtime(film.duration)}
+          {film.director || film.studio} <span>·</span> {film.year} <span>·</span>{" "}
+          {film.genres[0]}
         </p>
-        <span className="home-feature-director">
-          A film by {film.director || film.studio}
-        </span>
       </div>
       <div className="home-bottom-line">
-        <span>YOUR EVENING. A DIFFERENT WORLD.</span>
-        <div className="hero-controls">
-          <div
-            className="hero-dots"
-            role="group"
-            aria-label="Choose a featured film"
-          >
-            {selection.map((item, i) => (
-              <button
-                key={item.id}
-                type="button"
-                className={`hero-dot ${i === index ? "dot-active" : ""}`}
-                onClick={() => select(i)}
-                aria-label={`Switch to ${item.title}`}
-                aria-pressed={i === index}
-                aria-disabled={pending}
-              >
-                <span />
-              </button>
-            ))}
-          </div>
-          {!reducedMotion && (
+        <span>A DIFFERENT KIND OF CINEMA</span>
+        <div
+          className="hero-dots"
+          role="group"
+          aria-label="Choose a featured film"
+        >
+          {selection.map((item, i) => (
             <button
-              className="hero-pause"
-              onClick={() => setPaused((value) => !value)}
-              aria-label={paused ? "Resume slideshow" : "Pause slideshow"}
-            >
-              {paused ? <Play size={13} /> : <Pause size={13} />}
-            </button>
-          )}
+              key={item.id}
+              type="button"
+              className={`hero-dot ${i === index ? "dot-active" : ""}`}
+              onClick={() => select(i)}
+              aria-label={`Switch to ${item.title}`}
+            />
+          ))}
         </div>
-        <span className="hero-count">
-          {String(index + 1).padStart(2, "0")} <i />{" "}
-          {String(selection.length).padStart(2, "0")}
+        <span>
+          0{index + 1} <i /> 0{selection.length}
         </span>
       </div>
       {error && (

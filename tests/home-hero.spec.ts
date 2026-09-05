@@ -5,7 +5,7 @@ test("hero changes only after incoming artwork loads and keeps two layers", asyn
 }) => {
   await page.goto("/");
   const hero = page.getByRole("region", { name: "Featured films" });
-  await hero.getByRole("button", { name: "Pause slideshow" }).click();
+  await hero.hover();
   await hero
     .getByRole("button", { name: "Switch to Oppenheimer", exact: true })
     .click();
