@@ -1,3 +1,5 @@
+import { mockServerVideo } from "./stream-fixture";
+import { films } from "../lib/catalog";
 import { test, expect } from "@playwright/test";
 
 test("home connects the full discovery flow and preserves old film URLs", async ({
@@ -20,6 +22,9 @@ test("home connects the full discovery flow and preserves old film URLs", async 
     )
     .toBeTruthy();
   await page.screenshot({ path: "test-results/home-page.png", fullPage: true });
+  await page
+    .getByRole("button", { name: "Switch to Dune: Part Two", exact: true })
+    .click();
   await page.getByRole("link", { name: "Discover Dune: Part Two" }).click();
   await expect(page).toHaveURL(/collection\?film=dune-part-two/);
   await expect(
@@ -42,9 +47,11 @@ test("browse filters, empty state, saved library and account stay connected", as
   page,
 }) => {
   await page.goto("/browse?genre=Sci-fi");
-  await expect(page.locator(".portal-film-card")).toHaveCount(4);
+  await expect(page.locator(".portal-film-card")).toHaveCount(
+    films.filter((film) => film.genres.includes("Sci-fi")).length,
+  );
   await page.getByRole("button", { name: "All films", exact: true }).click();
-  await expect(page.locator(".portal-film-card")).toHaveCount(7);
+  await expect(page.locator(".portal-film-card")).toHaveCount(films.length);
   await page.getByLabel("Search the film library").fill("Amy Adams");
   await expect(page.locator(".portal-film-card")).toHaveCount(1);
   await page.getByLabel("Search the film library").fill("no matching film");
@@ -260,6 +267,7 @@ test("missing guide gives a useful 404 with a route home", async ({ page }) => {
 test("Home resumes saved playback and closing removes the autoplay URL", async ({
   page,
 }) => {
+  await mockServerVideo(page, "arrival");
   await page.goto("/");
   await expect(
     page.getByRole("button", { name: "Save Arrival", exact: true }),

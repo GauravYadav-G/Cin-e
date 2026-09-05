@@ -2,75 +2,50 @@
 
 A working streaming-platform MVP built from the supplied 12-second video reference. The design recreates its dark gallery, seven narrow movie posters, grayscale-to-color hover, oversized director name, floating navigation, and cinematic film detail pages.
 
-## Run locally
-
-Requires Node.js 22.13 or newer. Developed and checked with Node.js 24.
+## Run
 
 ```bash
 npm install
-npm run dev
+npm run dev:all
 ```
 
-Open the URL printed by Next.js, normally **http://localhost:3000**. No external credentials are needed. Guest profiles, watchlists, and viewing progress persist in `.data/cine.sqlite`. Keep this directory to retain local data.
+This starts Next.js and the loopback torrent server together. For separate processes, run `npm run dev` and `npm run stream`. Production requires a persistent Node server with TCP/UDP network access and writable torrent cache storage; an ephemeral serverless function is not sufficient.
 
-## Included
+## Playback: YouTube and Stream only
 
-- A cinematic Home page with featured films, curated picks, genre discovery, and Continue watching.
-- Dedicated film catalog, library, profile, About, and helpful 404 pages with shared navigation.
-- A support center with searchable guides, FAQ accordions, support request creation, confirmation, and request history with close/reopen controls.
-- Responsive director collection with staggered entrance and expanding, full-color hover states.
-- Seven film detail pages, shareable film URLs, browser back/forward navigation, cast, story, and metadata.
-- Search by title, actor, genre, or year, with genre filters and sorting.
-- Database-backed watchlist, guest profile, and playback progress.
-- A working HTML5 player, seeking, volume, fullscreen, optional captions, playback resume, loading and retry states.
-- Native HLS support in compatible browsers, with `hls.js` for other supported browsers.
-- Keyboard-accessible controls, focus-trapped dialogs, Escape to dismiss, `/` to search, reduced-motion support.
-- Local movie artwork, local fonts, and a local open-licensed sample trailer. No third-party requests are required to use the default preview.
+- **YouTube** embeds the selected film’s `youtubeId` from `lib/catalog.ts`.
+- **Stream** resolves that film’s magnet on the Node server, then proxies its video through `/api/stream/<film-id>`.
+- There is no demo fallback, global-film override, Webtor, browser-side WebTorrent, NHD, or direct external MP4/HLS source mode.
+- Missing magnets produce an explicit unavailable state; the player never substitutes another film.
 
-## Stack
+Create `.data/stream-sources.json` using `config/stream-sources.example.json` as a template:
 
-**Next.js 16 App Router + React 19 + TypeScript** handles rendering and the server API. Motion handles page and entrance transitions; CSS handles the reference's flexible poster strip. The app uses `next/image` and self-hosted DM Sans.
-
-**PostgreSQL** is the intended deployed database for viewer state. The application uses parameterized queries and a connection pool through `pg`. A built-in **SQLite** adapter makes the local preview usable without provisioning infrastructure. The production path does not silently fall back to SQLite if a database connection fails.
-
-The film catalog is currently curated in `lib/catalog.ts`. That keeps this seven-film editorial collection simple to edit. Film metadata and stream entitlements should move into a database/CMS when building catalog administration.
-
-Primary documentation: [Next.js App Router](https://nextjs.org/docs/app/getting-started), [node-postgres](https://node-postgres.com/features/queries), [Node SQLite](https://nodejs.org/api/sqlite.html), [HLS.js](https://github.com/video-dev/hls.js).
-
-## PostgreSQL setup
-
-Set your managed PostgreSQL connection string in `.env.local` or the hosting environment:
-
-```dotenv
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/cine?sslmode=require
+```json
+{
+  "your-film-id": {
+    "magnet": "magnet:?xt=urn:btih:YOUR_INFO_HASH",
+    "transcode": false
+  }
+}
 ```
 
-Then initialize the schema:
+Map each film to its own magnet. The server selects the largest video to avoid accidentally choosing a sample. Set optional `fileIndex` to select a particular file (zero-based torrent file index).
 
-```bash
-npm run db:migrate
-```
+Alternatively, use `MAGNET_YOUR_FILM_ID` (replace hyphens with underscores), or the scoped legacy pair `STREAM_FILM_ID=your-film-id` and `STREAM_URL=magnet:?...`. An unscoped `STREAM_URL` and the old `SERVER_STREAM` option are ignored. `STREAM_TRANSCODE=true` enables conversion for the scoped legacy source. Magnets stay server-side and are not returned in playback responses.
 
-For a local PostgreSQL instance, a Docker Compose definition is included. Supply `POSTGRES_PASSWORD`, run `docker compose up -d`, and use a matching local `DATABASE_URL`. The database port is bound to localhost. Migrations are idempotent; the MVP also initializes missing tables when first used.
+The cache is stored under `.data/torrents`, with up to four active torrents and cleanup after fifteen idle minutes. Metadata loading is deduplicated and times out with an explicit error if no peer provides it. A magnet’s availability still depends on reachable seeds.
 
-Do not set `ALLOW_SQLITE_PREVIEW=true` for an ephemeral or multi-instance deployment: SQLite state would not be shared or durable there. This flag is only for intentionally running a local production preview.
+Compatible MP4/WebM video streams support HTTP byte-range seeking. MKV/AVI/MOV/TS files are converted to H.264/AAC fragmented MP4 using FFmpeg. Set `transcode: true` for other incompatible codecs such as HEVC in an MP4 container. Install FFmpeg on the torrent server or set `FFMPEG_PATH`. Conversion is capped at 1080p and is sequential: seeking/resume is supported for compatible direct files, not live-converted streams. Video-only torrents remain video-only.
 
-## Production build / local preview
+`TORRENT_STREAM_PORT` defaults to `8899`; Next uses `TORRENT_STREAM_URL=http://127.0.0.1:8899`. Configure both consistently if changing the port. The internal service binds only to loopback and accepts film IDs configured on the server, not arbitrary browser-supplied magnets. Connect account entitlements before exposing a paid service. YouTube embedding remains subject to each video’s embedding settings.
 
-```bash
-npm run build
-ALLOW_SQLITE_PREVIEW=true npm start
-```
+## Database
 
-For an actual deployment, provide `DATABASE_URL`, run migrations, and use `npm start` without the SQLite preview flag. Use HTTPS. The connection pool is capped at ten connections per process; tune the limit and use a managed pooler for serverless hosting.
+Without `DATABASE_URL`, local development uses SQLite in `.data/cine.sqlite`. Set a PostgreSQL connection string in production and run `npm run db:migrate`. For an intentional local production preview, use `ALLOW_SQLITE_PREVIEW=true npm start` after `npm run build`. Guest profiles, watchlists, progress, and support requests remain connected to the browser’s session cookie.
 
-## Playback
+## Pages
 
-The included video is the **Big Buck Bunny trailer**, created by Blender Foundation, distributed under **CC BY 3.0**, and served here unmodified. The player explicitly distinguishes the sample from the selected commercial film.
-
-`app/api/playback/[id]/route.ts` is the playback-provider boundary. An optional `STREAM_URL` environment variable supplies one MP4 or HLS stream for testing a licensed source. It applies to every film in this MVP; it is not per-film catalog management. A cross-origin stream must permit the necessary CORS requests.
-
-Before operating a paid streaming service, implement per-film licensed sources, authenticated accounts, subscription/entitlement checks, signed playback URLs, and the required video infrastructure. Store video in object storage and deliver through a video CDN, rather than in PostgreSQL. The included guest profile is browser-specific and does not provide account sign-in or cross-device sync. No payment, DRM, upload/transcoding pipeline, admin CMS, or deployment is included.
+Home (`/`), catalog (`/browse`), director collection (`/collection`), library (`/library`), profile (`/account`), About (`/about`), and support (`/support`) are connected. Film links use `/collection?film=<id>`; legacy `/?film=<id>` links redirect there. The support center includes guides, FAQs, saved requests, and close/reopen controls. Requests are stored locally; no support email integration is connected.
 
 ## Validation
 
@@ -78,55 +53,13 @@ Before operating a paid streaming service, implement per-film licensed sources, 
 npm run lint
 npm run typecheck
 npm run build
-# With the app running, and Google Chrome installed:
-npm test
-# For another running port:
-TEST_BASE_URL=http://localhost:3001 npm test
+npm run test:stream
+# App running, Google Chrome installed:
+npm test -- --grep "player sources"
 ```
 
-End-to-end tests cover reference interactions and browser history, the Home-to-film flow, search/filtering, watchlist persistence/removal, profile persistence, actual sample playback/seeking/resume, mobile overflow, support guides and request creation/persistence/status changes, helpful 404s, and API validation/session isolation. The default test runner uses installed Google Chrome. Change the Playwright channel if you prefer its bundled Chromium.
+The server tests generate their own video and seed it over a local TCP torrent connection. They verify metadata acquisition, concurrent request deduplication, selecting the correct video, byte-exact range/suffix streaming, invalid-range handling, and FFmpeg conversion. They do not download commercial films or depend on public seeds. Browser playback tests use a test-only HTTP fixture; no application endpoint uses a sample fallback.
 
-The browser tests exercise the SQLite preview. A live PostgreSQL instance was not available during implementation; validate the PostgreSQL connection and migration in your deployment environment.
+Implementation references: [WebTorrent server API](https://webtorrent.io/docs), [YouTube embeds](https://developers.google.com/youtube/player_parameters).
 
-## Routes and connected flows
-
-| Route                            | Purpose                                                    |
-| -------------------------------- | ---------------------------------------------------------- |
-| `/`                              | Home, featured films, curated picks, and Continue watching |
-| `/browse`                        | Full catalog with search, genre filtering, and sorting     |
-| `/collection`                    | Original reference-inspired director collection            |
-| `/collection?film=dune-part-two` | Film detail; add `&play=1` for resume playback             |
-| `/library`                       | Saved films and viewing history                            |
-| `/account`                       | Persistent guest display name and profile information      |
-| `/support`                       | Searchable help center and FAQs                            |
-| `/support/[slug]`                | Six detailed help guides                                   |
-| `/support/contact`               | Save a support request                                     |
-| `/support/requests`              | Request history, details, close, and reopen                |
-| `/about`                         | CINÉ’s story                                               |
-
-Legacy `/?film=...` links redirect to the collection’s film page. `/home` redirects to `/`.
-
-Support requests use a separate database table, scoped to the current guest session. The API validates input, rejects cross-origin writes, and allows up to ten new requests per profile per hour. **Saving a request does not send email or contact a support team.** The form and confirmation make this clear. Connect an actual support workflow before offering staffed support.
-
-## Files
-
-```text
-app/                       Page shell, styles, API routes
-components/cinema.tsx      Gallery, details, catalog, dialogs, profile
-components/player.tsx     MP4/HLS player and progress persistence
-components/portal.tsx     Home, film catalog, library, and account pages
-components/site-shell.tsx Shared header, footer, and navigation
-components/help-center.tsx Searchable help center and FAQ
-components/support-requests.tsx Support form, confirmation, and request history
-lib/help.ts               Help guide and FAQ content
-lib/catalog.ts            Film metadata and artwork mapping
-lib/db.ts                 PostgreSQL and local SQLite adapters
-lib/session.ts            Guest sessions and request validation
-database/schema.sql       PostgreSQL schema
-scripts/migrate.mjs        PostgreSQL migration runner
-public/                   Local artwork, fonts, sample video
-reference/                Frames extracted from your supplied video
-tests/                    Playwright end-to-end tests
-```
-
-See [DESIGN.md](DESIGN.md) for reference analysis and [CREDITS.md](CREDITS.md) for asset attribution.
+See `DESIGN.md` for the original UI reference and `CREDITS.md` for asset credits.

@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { AnimatePresence, motion, MotionConfig } from "motion/react";
+import {
+  AnimatePresence,
+  motion,
+  MotionConfig,
+  useReducedMotion,
+} from "motion/react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -100,6 +105,8 @@ function Modal({
 }
 
 export default function Cinema({ films }: { films: Film[] }) {
+  const reduceMotion = useReducedMotion();
+  const [revealOrigin, setRevealOrigin] = useState("inset(8% 8% 8% 8%)");
   const [selected, setSelected] = useState<Film | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [panel, setPanel] = useState<Panel>(null);
@@ -182,6 +189,15 @@ export default function Cinema({ films }: { films: Film[] }) {
   }, [panel, playing, selected]);
 
   function openFilm(film: Film) {
+    const poster = document.querySelector(
+      `[data-film-id="${CSS.escape(film.id)}"]`,
+    );
+    const bounds = poster?.getBoundingClientRect();
+    setRevealOrigin(
+      bounds
+        ? `inset(${Math.max(0, bounds.top)}px ${Math.max(0, window.innerWidth - bounds.right)}px ${Math.max(0, window.innerHeight - bounds.bottom)}px ${Math.max(0, bounds.left)}px)`
+        : "inset(8% 8% 8% 8%)",
+    );
     setSelected(film);
     setPanel(null);
     setHovered(null);
@@ -223,7 +239,7 @@ export default function Cinema({ films }: { films: Film[] }) {
   ];
   let results = films.filter((film) => {
     const haystack =
-      `${film.title} ${film.year} ${film.genres.join(" ")} ${film.cast.map((actor) => actor.name).join(" ")} Denis Villeneuve`.toLowerCase();
+      `${film.title} ${film.year} ${film.studio} ${film.genres.join(" ")} ${film.cast.map((actor) => actor.name).join(" ")} Denis Villeneuve Gaurav Disney`.toLowerCase();
     return (
       haystack.includes(query.toLowerCase().trim()) &&
       (genre === "All films" || film.genres.includes(genre)) &&
@@ -256,7 +272,7 @@ export default function Cinema({ films }: { films: Film[] }) {
             <button onClick={() => openPanel("catalog")}>Films</button>
             <ChevronRight size={12} />
             <button onClick={home} className={!selected ? "current" : ""}>
-              Denis Villeneuve
+              Gaurav
             </button>
             {selected && (
               <>
@@ -272,7 +288,7 @@ export default function Cinema({ films }: { films: Film[] }) {
           </Link>
         </header>
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           {!selected ? (
             <motion.section
               key="gallery"
@@ -280,8 +296,8 @@ export default function Cinema({ films }: { films: Film[] }) {
               className="collection-view"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0, scale: 0.97 }}
-              transition={{ duration: 0.4 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: reduceMotion ? 0 : 0.55 }}
             >
               <div className="collection-heading">
                 <div>
@@ -289,20 +305,33 @@ export default function Cinema({ films }: { films: Film[] }) {
                   <h1>A mind. An entire universe.</h1>
                 </div>
                 <p>
-                  THE DENIS VILLENEUVE COLLECTION
+                  THE GAURAV COLLECTION
                   <span>Seven films. One singular vision.</span>
                 </p>
               </div>
               <div className="film-shelf" onMouseLeave={() => setHovered(null)}>
-                {films.map((film, index) => (
+                {films.slice(0, 7).map((film, index) => (
                   <motion.button
                     key={film.id}
+                    data-film-id={film.id}
                     className={`film-strip ${hovered === film.id ? "is-active" : ""}`}
-                    initial={{ opacity: 0, y: 65 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={
+                      reduceMotion
+                        ? false
+                        : {
+                            opacity: 0,
+                            y: 90,
+                            clipPath: "inset(100% 0% 0% 0%)",
+                          }
+                    }
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      clipPath: "inset(0% 0% 0% 0%)",
+                    }}
                     transition={{
-                      duration: 0.7,
-                      delay: index * 0.065,
+                      duration: reduceMotion ? 0 : 1.05,
+                      delay: reduceMotion ? 0 : 0.12 + index * 0.11,
                       ease: [0.16, 1, 0.3, 1],
                     }}
                     onMouseEnter={() => setHovered(film.id)}
@@ -314,9 +343,10 @@ export default function Cinema({ films }: { films: Film[] }) {
                     <Image
                       src={film.image}
                       alt={`${film.title} theatrical poster`}
+                      quality={90}
                       fill
                       sizes="(max-width: 640px) 45vw, 20vw"
-                      priority={index < 3}
+                      priority
                     />
                     <span className="strip-shade" />
                     <span className="strip-number">0{index + 1}</span>
@@ -346,7 +376,7 @@ export default function Cinema({ films }: { films: Film[] }) {
                 </button>
               </div>
               <div className="director-type" aria-hidden="true">
-                Villeneuve
+                Gaurav
               </div>
               <div className="collection-footnote">
                 <span>CURATED, NOT GENERATED.</span>
@@ -359,14 +389,20 @@ export default function Cinema({ films }: { films: Film[] }) {
               key={selected.id}
               id="main-content"
               className={`film-detail detail-${selected.id}`}
-              initial={{ opacity: 0, scale: 1.04 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={
+                reduceMotion ? false : { opacity: 1, clipPath: revealOrigin }
+              }
+              animate={{ opacity: 1, clipPath: "inset(0px 0px 0px 0px)" }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+              transition={{
+                duration: reduceMotion ? 0 : 0.95,
+                ease: [0.22, 1, 0.36, 1],
+              }}
               style={{ "--film-color": selected.color } as React.CSSProperties}
             >
               <Image
                 className="detail-backdrop"
+                quality={90}
                 src={selected.backdrop}
                 alt=""
                 fill
@@ -474,7 +510,21 @@ export default function Cinema({ films }: { films: Film[] }) {
                     ? "In your list"
                     : "Add to my list"}
                 </button>
-                <span className="preview-note">Sample playback available</span>
+                {selected.trailerUrl && (
+                  <a
+                    className="secondary-button"
+                    href={selected.trailerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Watch ${selected.title} trailer on YouTube`}
+                    style={{ textDecoration: "none" }}
+                  >
+                    YouTube Trailer ↗
+                  </a>
+                )}
+                <span className="preview-note">
+                  YouTube · Server torrent stream
+                </span>
               </div>
               <div className="film-side-nav">
                 <button
@@ -864,7 +914,7 @@ export default function Cinema({ films }: { films: Film[] }) {
             <div className="about-feature">
               <Clapperboard size={22} />
               <div>
-                <h3>In focus: Denis Villeneuve</h3>
+                <h3>In focus: Gaurav</h3>
                 <p>
                   From the quiet mystery of Arrival to the vast landscapes of
                   Dune, explore seven films from a visionary storyteller.

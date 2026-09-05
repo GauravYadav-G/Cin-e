@@ -16,7 +16,7 @@ The contact sheet and two detailed frames are retained in `reference/`.
 
 The app preserves the reference's composition and visual hierarchy. CINÉ provides an independent brand, with a pale acid-yellow accent, local DM Sans typography, restrained labels, and a seven-film editorial collection.
 
-The desktop film shelf uses flexible widths and a 650ms eased hover transition. The active film expands to 1.33× its share and 112% of the shelf height; its grayscale filter fades out. Motion handles the staggered entrance and page changes. Reduced-motion preferences remove these animations.
+The desktop film shelf uses flexible widths and a 650ms eased hover transition. The active film expands to 1.33× its share and 112% of the shelf height; its grayscale filter fades out. Posters rise through a bottom-to-top reveal over 1.05 seconds, staggered 110ms apart. Selecting a poster expands a clipped film screen from that poster's measured bounds over 950ms while the gallery fades away. Titles, synopsis, facts and controls enter in sequence; the dock stays in place. Desktop backgrounds settle gently as the screen opens. Reduced-motion preferences skip the spatial reveals and decorative animations.
 
 On mobile, the seven-strip composition becomes a horizontally scrollable, snap-aligned shelf. Film titles remain visible without requiring hover. Detail text stacks below the principal artwork, and the persistent dock stays within a 390px viewport.
 

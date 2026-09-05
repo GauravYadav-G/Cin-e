@@ -1,4 +1,31 @@
+import { mockServerVideo } from "./stream-fixture";
+import { films } from "../lib/catalog";
 import { test, expect } from "@playwright/test";
+
+test("reduced motion keeps gallery and film detail immediately usable", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/collection");
+  const poster = page.getByRole("button", {
+    name: "Explore Dune: Part Two",
+    exact: true,
+  });
+  await expect(poster).toHaveCSS("opacity", "1");
+  await poster.click();
+  await expect(page.locator(".detail-heading h1")).toHaveCSS(
+    "animation-name",
+    "none",
+  );
+  await expect(page.locator(".film-detail")).toHaveCSS(
+    "clip-path",
+    "inset(0px)",
+  );
+  await page
+    .getByRole("button", { name: "The collection", exact: true })
+    .click();
+  await expect(poster).toBeVisible();
+});
 
 test("reference gallery, hover, detail navigation and history", async ({
   page,
@@ -54,7 +81,11 @@ test("search supports actors, genres and an empty state", async ({ page }) => {
   await page
     .getByRole("textbox", { name: "Search films and actors" })
     .fill("Zendaya");
-  await expect(page.locator(".catalog-card")).toHaveCount(2);
+  await expect(page.locator(".catalog-card")).toHaveCount(
+    films.filter((film) =>
+      film.cast.some((actor) => actor.name.includes("Zendaya")),
+    ).length,
+  );
   await page
     .getByRole("textbox", { name: "Search films and actors" })
     .fill("not-a-film");
@@ -63,7 +94,9 @@ test("search supports actors, genres and an empty state", async ({ page }) => {
   ).toBeVisible();
   await page.getByRole("button", { name: "Clear search" }).click();
   await page.getByRole("button", { name: "Thriller", exact: true }).click();
-  await expect(page.locator(".catalog-card")).toHaveCount(4);
+  await expect(page.locator(".catalog-card")).toHaveCount(
+    films.filter((film) => film.genres.includes("Thriller")).length,
+  );
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
@@ -110,9 +143,10 @@ test("guest profile name is saved in the database", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("real sample video loads, plays, seeks and saves progress", async ({
+test("server stream video loads, plays, seeks and saves progress", async ({
   page,
 }) => {
+  await mockServerVideo(page, "dune-part-two");
   await page.goto("/collection?film=dune-part-two");
   await expect(
     page.getByRole("button", { name: "Add to my list" }),
@@ -127,11 +161,7 @@ test("real sample video loads, plays, seeks and saves progress", async ({
   await expect
     .poll(() => video.evaluate((node: HTMLVideoElement) => node.currentTime))
     .toBeGreaterThan(0);
-  await expect(
-    page.getByText(
-      "This sample demonstrates the player; it is not Dune: Part Two.",
-    ),
-  ).toBeVisible();
+  await expect(video).toHaveAttribute("src", "/api/stream/dune-part-two");
   await video.evaluate((node: HTMLVideoElement) => {
     node.currentTime = 20;
     node.pause();

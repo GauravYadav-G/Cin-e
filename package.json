@@ -4,11 +4,14 @@
   "description": "A cinematic streaming platform inspired by the supplied video reference.",
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
+    "stream": "node scripts/stream-server.mjs",
+    "dev:all": "node scripts/dev-all.mjs",
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
+    "test:stream": "node --test tests/torrent-server.test.mjs",
     "db:migrate": "node scripts/migrate.mjs"
   },
   "keywords": [],
@@ -19,13 +22,13 @@
     "node": ">=22.13.0"
   },
   "dependencies": {
-    "hls.js": "^1.7.2",
     "lucide-react": "^1.41.0",
     "motion": "^13.2.0",
     "next": "^16.3.4",
     "pg": "^8.23.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "webtorrent": "^3.0.21"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

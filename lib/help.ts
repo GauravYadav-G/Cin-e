@@ -23,7 +23,7 @@ export const helpArticles = [
       },
       {
         title: "Enter the story",
-        text: "On the film page, choose Watch preview or the circular play button. The current preview uses the Big Buck Bunny trailer to demonstrate playback. It is clearly labeled and is not the selected commercial film.",
+        text: "Open the player from the film page. YouTube shows that film’s configured YouTube video. Stream connects to that film’s magnet on the server. If no magnet is configured, the player tells you instead of playing a different film.",
       },
       {
         title: "Keep something for later",
@@ -65,11 +65,11 @@ export const helpArticles = [
     steps: [
       {
         title: "Play, pause, and seek",
-        text: "Use the native video controls to play or pause. Drag the timeline to jump to another moment. The demo trailer is approximately 33 seconds long; the runtime displayed on a film page describes the actual film.",
+        text: "Use the native video controls to play or pause. Drag the timeline to jump to another moment. Seeking is supported for compatible direct torrent video files. Videos converted live on the server play sequentially.",
       },
       {
         title: "Adjust the experience",
-        text: "Use the player’s volume and fullscreen buttons where your browser supports them. On mobile, tap the video to reveal its controls. The demo includes an optional English descriptions track, available from the captions control; it is not a complete transcript.",
+        text: "Use the player’s volume and fullscreen buttons where your browser supports them. On mobile, tap the video to reveal its controls. YouTube’s captions depend on the selected video. Torrent playback uses the tracks supported by the browser; automatic subtitle loading is not provided.",
       },
       {
         title: "Pick up where you left off",
@@ -127,16 +127,16 @@ export const helpArticles = [
     slug: "about-previews",
     category: "Getting started",
     title: "What can I watch here?",
-    summary: "About the curated catalog and sample screenings.",
+    summary: "About YouTube videos and server-side magnet streams.",
     time: "1 min read",
     steps: [
       {
         title: "Explore the film collection",
-        text: "CINÉ currently features seven films by Denis Villeneuve, with artwork, cast, descriptions, and curated metadata. These pages demonstrate how a streaming catalog looks and works.",
+        text: "Explore the film catalog with artwork, cast, descriptions, and curated metadata. Available playback sources are configured separately for each film.",
       },
       {
-        title: "Watch a sample screening",
-        text: "By default, every film opens the same open-licensed Big Buck Bunny trailer by Blender Foundation. The player labels it as demo playback. No full commercial movies are included.",
+        title: "Choose your source",
+        text: "YouTube opens the film’s configured YouTube video. Stream downloads the film’s configured torrent on the server and delivers its video to your browser. There are no sample or shared-film fallbacks. Torrent availability depends on reachable peers.",
       },
       {
         title: "No subscription required",
@@ -152,9 +152,9 @@ export const faqs = [
       "No. A guest profile is created for this browser. You can explore films, save a list, and watch sample previews without signing up.",
   },
   {
-    question: "Why does every film play the same trailer?",
+    question: "Why is a film’s Stream source unavailable?",
     answer:
-      "This is a working platform preview. The Big Buck Bunny trailer demonstrates the player while the commercial titles demonstrate the film catalog. Full commercial films are not included.",
+      "Each film needs its own magnet configured on the server. If one is missing, the player shows Source not available. If it is configured, the torrent service must be running and the magnet must have reachable peers.",
   },
   {
     question: "Will my list be here when I come back?",

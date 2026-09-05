@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { films, runtime, type Film } from "@/lib/catalog";
 import SiteShell from "./site-shell";
+import HomeHero from "./home-hero";
 
 type Library = {
   name: string;
@@ -210,7 +211,7 @@ export default function Portal({
                 <div className="resume-info">
                   <strong>{film.title}</strong>
                   <span>
-                    Continue preview ·{" "}
+                    Continue watching ·{" "}
                     {Math.round((item.seconds / item.duration) * 100)}% watched
                   </span>
                 </div>
@@ -233,54 +234,7 @@ export default function Portal({
     <SiteShell>
       {page === "home" ? (
         <>
-          <section className="home-hero">
-            <Image
-              className="home-art"
-              src="/images/dune-two-hero.jpg"
-              alt="Dune: Part Two ensemble artwork"
-              fill
-              priority
-              sizes="100vw"
-            />
-            <div className="home-shade" />
-            <div className="home-hero-content">
-              <span className="eyebrow accent">
-                <i className="status-dot" /> THE CINÉ SELECTION / 001
-              </span>
-              <h1>
-                Some stories
-                <br />
-                stay with you.
-              </h1>
-              <p>
-                Extraordinary films. Singular voices.
-                <br />A little less scrolling. A little more feeling.
-              </p>
-              <div className="home-hero-actions">
-                <Link className="primary-button" href={filmUrl(films[1])}>
-                  <Play size={15} fill="currentColor" />
-                  Discover Dune: Part Two
-                </Link>
-                <Link className="hero-secondary" href="/browse">
-                  Explore all films
-                  <ArrowUpRight size={16} />
-                </Link>
-              </div>
-            </div>
-            <div className="home-feature-label">
-              <span>FEATURED THIS WEEK</span>
-              <strong>Dune: Part Two</strong>
-              <p>
-                Denis Villeneuve <span>·</span> 2024 <span>·</span> Sci-fi
-              </p>
-            </div>
-            <div className="home-bottom-line">
-              <span>A DIFFERENT KIND OF CINEMA</span>
-              <span>
-                01 <i /> 07
-              </span>
-            </div>
-          </section>
+          <HomeHero />
           {inProgress.length > 0 && continueWatching}
           <section className="portal-section">
             <div className="section-label">
@@ -295,7 +249,11 @@ export default function Portal({
                 <ArrowUpRight size={14} />
               </Link>
             </div>
-            {cards([films[1], films[0], films[5], films[3]])}
+            {cards(
+              ["dune-part-two", "arrival", "blade-runner-2049", "sicario"]
+                .map((id) => films.find((film) => film.id === id)!)
+                .filter(Boolean),
+            )}
           </section>
           <section className="director-feature">
             <div className="director-feature-copy">
@@ -340,19 +298,21 @@ export default function Portal({
                 {
                   title: "Beyond the ordinary",
                   genre: "Sci-fi",
-                  image: films[0].image,
+                  image: films.find((film) => film.id === "arrival")!.backdrop,
                   caption: "Worlds worth getting lost in.",
                 },
                 {
                   title: "On the edge",
                   genre: "Thriller",
-                  image: films[3].image,
+                  image: films.find((film) => film.id === "prisoners")!
+                    .backdrop,
                   caption: "Just one more scene.",
                 },
                 {
                   title: "The human condition",
                   genre: "Drama",
-                  image: films[2].image,
+                  image: films.find((film) => film.id === "interstellar")!
+                    .backdrop,
                   caption: "Stories that hit closer to home.",
                 },
               ].map((mood) => (
@@ -514,7 +474,11 @@ export default function Portal({
                 : "Seven extraordinary films. Endless reasons to fall in love with cinema."}
             </p>
           </div>
-          <BrowseLocation onGenre={setGenre} onTab={setTab} />
+          <BrowseLocation
+            onGenre={setGenre}
+            onTab={setTab}
+            onQuery={setQuery}
+          />
           {page === "library" && (
             <div className="library-tabs">
               <button
@@ -650,9 +614,11 @@ export default function Portal({
 function BrowseLocation({
   onGenre,
   onTab,
+  onQuery,
 }: {
   onGenre: (value: string) => void;
   onTab: (value: string) => void;
+  onQuery: (value: string) => void;
 }) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -660,8 +626,12 @@ function BrowseLocation({
     if (genre && films.some((film) => film.genres.includes(genre)))
       onGenre(genre);
     if (params.get("tab") === "history") onTab("history");
+    const searchParam = params.get("search") || params.get("actor");
+    if (searchParam && searchParam !== "1") {
+      onQuery(searchParam);
+    }
     if (params.has("search"))
       document.getElementById("catalog-search")?.focus();
-  }, [onGenre, onTab]);
+  }, [onGenre, onTab, onQuery]);
   return null;
 }

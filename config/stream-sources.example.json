@@ -1,0 +1,6 @@
+{
+  "your-film-id": {
+    "magnet": "magnet:?xt=urn:btih:REPLACE_WITH_YOUR_INFO_HASH",
+    "transcode": false
+  }
+}

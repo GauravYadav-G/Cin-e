@@ -56,7 +56,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
         </div>
         <nav aria-label="Footer navigation">
           <Link href="/browse">Explore films</Link>
-          <Link href="/collection">Director collection</Link>
+          <Link href="/#collection">The collection</Link>
           <Link href="/library">My list</Link>
           <Link href="/account">Your profile</Link>
           <Link href="/support">Help center</Link>
