@@ -1,5 +1,7 @@
 # Asset credits
 
+- **Continue-watching cards:** dedicated landscape film artwork downloaded from TMDB at 1280-pixel width. Source URLs and movie pages are recorded in `config/watch-card-sources.json`. These assets live separately in `public/images/watch-cards/`; existing posters and backdrops are preserved.
+
 - **Design reference:** the MP4 supplied in this workspace by the user. Reference frames were extracted from it. The original Enemy strip has been replaced in the catalog with full-resolution artwork.
 - **Upgraded artwork:** original-resolution posters and widescreen backgrounds from TMDB; individual source URLs are recorded in `config/artwork-sources.json`.
 - **Movie poster artwork:** downloaded from TMDB's image CDN. Posters and film properties belong to their respective owners. This independent design preview does not imply TMDB, IMDb, or studio endorsement or rights to stream the films. Verify artwork permissions before public commercial use.

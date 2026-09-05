@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  ArrowRight,
   ArrowUpRight,
   Bookmark,
   Check,
@@ -11,18 +10,16 @@ import {
   LoaderCircle,
   Play,
   Search,
-  UserRound,
   X,
 } from "lucide-react";
 import { films, runtime, type Film } from "@/lib/catalog";
 import SiteShell from "./site-shell";
 import HomeHero from "./home-hero";
+import ProfilePanel from "./profile-panel";
+import Dashboard from "./dashboard";
+import type { Library } from "@/lib/profile-types";
+import { useProfileRefresh } from "./use-profile-refresh";
 
-type Library = {
-  name: string;
-  saved: string[];
-  progress: { film_id: string; seconds: number; duration: number }[];
-};
 const filmUrl = (film: Film, resume = false) =>
   `/collection?film=${film.id}${resume ? "&play=1" : ""}`;
 function FilmCard({
@@ -83,7 +80,7 @@ function FilmCard({
 export default function Portal({
   page,
 }: {
-  page: "home" | "browse" | "library" | "account";
+  page: "home" | "browse" | "library" | "account" | "dashboard";
 }) {
   const [library, setLibrary] = useState<Library | null>(null);
   const [error, setError] = useState("");
@@ -93,7 +90,6 @@ export default function Portal({
   const [genre, setGenre] = useState("All films");
   const [sort, setSort] = useState("curated");
   const [tab, setTab] = useState("saved");
-  const [name, setName] = useState("");
   const load = useCallback(
     () =>
       fetch("/api/library")
@@ -102,7 +98,6 @@ export default function Portal({
             throw new Error("Your profile couldn’t load. Please try again.");
           const data: Library = await response.json();
           setLibrary(data);
-          setName(data.name);
           setError("");
         })
         .catch((err) => setError(err.message)),
@@ -111,6 +106,7 @@ export default function Portal({
   useEffect(() => {
     void load();
   }, [load]);
+  useProfileRefresh(load);
   async function save(film: Film) {
     if (!library || busy) return;
     setBusy(true);
@@ -147,6 +143,23 @@ export default function Portal({
       (item) => item.seconds > 0 && item.seconds < item.duration - 3,
     ) || [];
   const recent = library?.progress.filter((item) => item.seconds > 0) || [];
+  const savedFilms = (library?.saved || [])
+    .map((id) => films.find((film) => film.id === id))
+    .filter((film): film is Film => Boolean(film));
+  const preferredGenres = library?.preferences?.favoriteGenres || [];
+  const recommendations = preferredGenres.length
+    ? [...films]
+        .filter((film) => !library?.saved.includes(film.id))
+        .sort(
+          (a, b) =>
+            b.genres.filter((genre) => preferredGenres.includes(genre)).length -
+              a.genres.filter((genre) => preferredGenres.includes(genre))
+                .length || Number(b.rating) - Number(a.rating),
+        )
+        .slice(0, 4)
+    : ["dune-part-two", "arrival", "blade-runner-2049", "sicario"]
+        .map((id) => films.find((film) => film.id === id)!)
+        .filter(Boolean);
   let results = films.filter((film) => {
     const matches =
       `${film.title} ${film.year} ${film.genres.join(" ")} ${film.cast.map((actor) => actor.name).join(" ")}`
@@ -199,10 +212,11 @@ export default function Portal({
                 key={film.id}
               >
                 <Image
-                  src={film.image}
+                  src={`/images/watch-cards/${film.id}.jpg`}
                   alt=""
                   fill
-                  sizes="(max-width: 640px) 90vw, 40vw"
+                  quality={90}
+                  sizes="(max-width: 640px) 90vw, (max-width: 1000px) 44vw, 28vw"
                 />
                 <span className="resume-shade" />
                 <span className="resume-play">
@@ -240,7 +254,9 @@ export default function Portal({
             <div className="section-label">
               <div>
                 <span className="eyebrow accent">
-                  HANDPICKED, FRAME BY FRAME
+                  {preferredGenres.length
+                    ? "MATCHED TO YOUR FAVORITE GENRES"
+                    : "HANDPICKED, FRAME BY FRAME"}
                 </span>
                 <h2>Your next great film.</h2>
               </div>
@@ -249,31 +265,28 @@ export default function Portal({
                 <ArrowUpRight size={14} />
               </Link>
             </div>
-            {cards(
-              ["dune-part-two", "arrival", "blade-runner-2049", "sicario"]
-                .map((id) => films.find((film) => film.id === id)!)
-                .filter(Boolean),
-            )}
+            {cards(recommendations)}
           </section>
           <section className="director-feature">
             <div className="director-feature-copy">
-              <span className="eyebrow accent">IN FOCUS — VOL. 01</span>
+              <span className="eyebrow accent">YOUR PERSONAL COLLECTION</span>
               <h2>
-                A mind.
+                Your taste.
                 <br />
-                An entire universe.
+                Your In Focus.
               </h2>
               <p>
-                From the language of the unknown to the sands of Arrakis. Step
-                inside the extraordinary worlds of Denis Villeneuve.
+                {savedFilms.length
+                  ? `${library?.name}, your ${savedFilms.length} saved films are ready. Every title here belongs to your own list.`
+                  : "Save the films you love. Build a collection that belongs to you, and find it on every device when you sign in."}
               </p>
               <Link href="/collection" className="primary-button">
-                Enter the collection
+                Enter your collection
                 <ArrowUpRight size={16} />
               </Link>
             </div>
             <div className="director-poster-stack">
-              {[films[0], films[1], films[5]].map((film, i) => (
+              {savedFilms.slice(0, 3).map((film, i) => (
                 <div
                   key={film.id}
                   style={{ "--index": i } as React.CSSProperties}
@@ -283,7 +296,7 @@ export default function Portal({
               ))}
             </div>
             <span className="director-feature-type" aria-hidden="true">
-              Villeneuve
+              {library?.name || "In Focus"}
             </span>
           </section>
           <section className="portal-section">
@@ -347,114 +360,21 @@ export default function Portal({
             </Link>
           </section>
         </>
-      ) : page === "account" ? (
-        <div className="portal-page account-page">
-          <div className="page-intro">
-            <span className="eyebrow accent">THE BEST SEAT IS YOURS</span>
-            <h1>Your space.</h1>
-            <p>A name, a list, and a world of cinema that feels like you.</p>
+      ) : page === "account" || page === "dashboard" ? (
+        library ? (
+          page === "account" ? (
+            <ProfilePanel library={library} reload={load} />
+          ) : (
+            <Dashboard library={library} />
+          )
+        ) : (
+          <div className="portal-page">
+            <div className="empty-state">
+              <LoaderCircle className="spin" />
+              <p>Loading your profile…</p>
+            </div>
           </div>
-          <div className="account-grid">
-            <section className="account-panel">
-              <div className="account-identity">
-                <div className="profile-avatar">
-                  {(library?.name || "C")[0].toUpperCase()}
-                </div>
-                <div>
-                  <h2>{library?.name || "Your profile"}</h2>
-                  <span className="eyebrow">GUEST PROFILE</span>
-                </div>
-              </div>
-              <form
-                onSubmit={async (event) => {
-                  event.preventDefault();
-                  setBusy(true);
-                  setMessage("");
-                  try {
-                    const response = await fetch("/api/profile", {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ name }),
-                    });
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.error);
-                    setLibrary(
-                      (current) => current && { ...current, name: data.name },
-                    );
-                    setMessage("Your profile has been updated.");
-                  } catch (err) {
-                    setMessage((err as Error).message);
-                  } finally {
-                    setBusy(false);
-                  }
-                }}
-              >
-                <label htmlFor="account-name">What should we call you?</label>
-                <input
-                  id="account-name"
-                  required
-                  maxLength={40}
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  disabled={!library}
-                />
-                <p>Saved on this browser. No password or sign-up needed.</p>
-                <button className="primary-button" disabled={!library || busy}>
-                  {busy ? (
-                    <LoaderCircle className="spin" size={15} />
-                  ) : (
-                    <Check size={15} />
-                  )}
-                  Save changes
-                </button>
-              </form>
-              <div className="inline-status" role="status">
-                {message}
-              </div>
-            </section>
-            <aside className="account-side">
-              <div className="account-stats">
-                <Link href="/library">
-                  <strong>
-                    {String(library?.saved.length || 0).padStart(2, "0")}
-                  </strong>
-                  <span>
-                    FILMS SAVED
-                    <ArrowUpRight size={13} />
-                  </span>
-                </Link>
-                <Link href="/library?tab=history">
-                  <strong>{String(recent.length).padStart(2, "0")}</strong>
-                  <span>
-                    PREVIEWS EXPLORED
-                    <ArrowUpRight size={13} />
-                  </span>
-                </Link>
-              </div>
-              <div className="account-note">
-                <UserRound size={21} />
-                <h3>One browser. Your own space.</h3>
-                <p>
-                  Your list and progress belong to this browser profile.
-                  Clearing its cookies starts a new guest profile; profiles
-                  don’t sync between devices.
-                </p>
-                <Link href="/support/your-profile">
-                  How your profile works
-                  <ArrowRight size={14} />
-                </Link>
-              </div>
-              <Link className="account-support" href="/support">
-                <CircleHelp size={22} />
-                <div>
-                  <strong>A little help?</strong>
-                  <p>We’ll point you in the right direction.</p>
-                </div>
-                <ArrowUpRight size={20} />
-              </Link>
-            </aside>
-          </div>
-        </div>
+        )
       ) : (
         <div className="portal-page">
           <div className="page-intro">

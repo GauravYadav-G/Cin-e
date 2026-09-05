@@ -98,7 +98,7 @@ export const helpArticles = [
       },
       {
         title: "Keep the same browser profile",
-        text: "Your list is associated with this browser’s guest cookie. It survives ordinary page reloads. A different browser or clearing cookies starts a new guest profile.",
+        text: "Sign in with the same account on another device to open the same list. Guests keep their list in this browser until they create an account or clear its cookies.",
       },
     ],
   },
@@ -106,20 +106,20 @@ export const helpArticles = [
     slug: "your-profile",
     category: "Your profile",
     title: "A space that’s yours",
-    summary: "Your display name, guest session, and saved data.",
+    summary: "Your profile, sign-in, personal dashboard, and saved films.",
     time: "2 min read",
     steps: [
       {
         title: "Set your name",
-        text: "Open Your space and enter a display name of 1–40 characters. Choose Save changes. This updates your guest profile and the greeting shown in the collection’s profile panel.",
+        text: "Open Your space to edit your display name, bio, profile color, and up to five favorite genres. Save changes to update your dashboard, collection name, and recommendations.",
       },
       {
-        title: "Understand guest profiles",
-        text: "This version of CINÉ uses a browser-specific guest profile. There is no account password or email sign-in. Your profile, saved films, progress, and support requests are linked to a secure random session cookie.",
+        title: "Create an account or sign in",
+        text: "You can start as a guest. Create an account with an email and a password of at least 12 characters to keep this guest profile’s saved films and progress across devices. Sign in to an existing account to restore that account’s own collection.",
       },
       {
         title: "Know what stays with you",
-        text: "Using the same browser profile keeps your data available. Clearing the session cookie or switching browsers creates a new profile. Cross-device synchronization and account recovery are not available in this preview.",
+        text: "Your In Focus contains every film saved to your list. The dashboard shows your own saved films and viewing progress. Change your password from Your space; this signs out other devices. Email verification and forgotten-password recovery are not connected yet.",
       },
     ],
   },
@@ -149,7 +149,7 @@ export const faqs = [
   {
     question: "Do I need an account to get started?",
     answer:
-      "No. A guest profile is created for this browser. You can explore films, save a list, and watch sample previews without signing up.",
+      "No. A guest profile is created for this browser. Create an account when you want your saved films and progress to follow you across devices.",
   },
   {
     question: "Why is a film’s Stream source unavailable?",
@@ -159,7 +159,7 @@ export const faqs = [
   {
     question: "Will my list be here when I come back?",
     answer:
-      "Yes, when you return using the same browser profile and retain its cookies. Lists are saved in the application database. Clearing cookies or using another browser creates a separate guest profile.",
+      "Yes. Sign in with the same account on any device to restore your list. Guests need to retain their browser cookies, or create an account to keep their collection.",
   },
   {
     question: "Can I continue a preview from where I stopped?",
@@ -169,6 +169,6 @@ export const faqs = [
   {
     question: "What happens when I save a support request?",
     answer:
-      "Your request is stored with your guest profile and appears in Your requests. You can review, close, and reopen it. This preview does not send emails or connect to a support team.",
+      "Your request is stored with your profile and appears in Your requests. You can review, close, and reopen it. This preview does not send emails or connect to a support team.",
   },
 ];

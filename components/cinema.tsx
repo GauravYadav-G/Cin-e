@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { type Film, runtime } from "@/lib/catalog";
 import Player from "./player";
+import { useArtworkTheme } from "./artwork-theme";
+import { useProfileRefresh } from "./use-profile-refresh";
 
 type Panel =
   | "catalog"
@@ -109,8 +111,16 @@ export default function Cinema({ films }: { films: Film[] }) {
   const [revealOrigin, setRevealOrigin] = useState("inset(8% 8% 8% 8%)");
   const [selected, setSelected] = useState<Film | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
+  useArtworkTheme(
+    selected?.id || hovered || films[1]?.id,
+    !selected && Boolean(hovered),
+  );
   const [panel, setPanel] = useState<Panel>(null);
   const [saved, setSaved] = useState<string[]>([]);
+  const [email, setEmail] = useState<string | null>(null);
+  const focusFilms = saved
+    .map((id) => films.find((film) => film.id === id))
+    .filter((film): film is Film => Boolean(film));
   const [progress, setProgress] = useState<Progress[]>([]);
   const [name, setName] = useState("Film lover");
   const [draftName, setDraftName] = useState("Film lover");
@@ -129,6 +139,7 @@ export default function Cinema({ films }: { films: Film[] }) {
       if (!response.ok) throw new Error("Could not load library");
       const data = await response.json();
       setSaved(data.saved);
+      setEmail(data.email || null);
       setProgress(data.progress);
       setName(data.name);
       setDraftName(data.name);
@@ -140,6 +151,7 @@ export default function Cinema({ films }: { films: Film[] }) {
   }, []);
 
   // Library state changes only after the asynchronous network response resolves.
+  useProfileRefresh(loadLibrary);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadLibrary();
@@ -272,7 +284,7 @@ export default function Cinema({ films }: { films: Film[] }) {
             <button onClick={() => openPanel("catalog")}>Films</button>
             <ChevronRight size={12} />
             <button onClick={home} className={!selected ? "current" : ""}>
-              Gaurav
+              {name}
             </button>
             {selected && (
               <>
@@ -301,67 +313,115 @@ export default function Cinema({ films }: { films: Film[] }) {
             >
               <div className="collection-heading">
                 <div>
-                  <span className="eyebrow accent">IN FOCUS — VOL. 01</span>
-                  <h1>A mind. An entire universe.</h1>
+                  <span className="eyebrow accent">YOUR SAVED COLLECTION</span>
+                  <h1>{name}’s In Focus.</h1>
                 </div>
                 <p>
-                  THE GAURAV COLLECTION
-                  <span>Seven films. One singular vision.</span>
+                  CURATED BY YOU
+                  <span>
+                    {focusFilms.length} saved{" "}
+                    {focusFilms.length === 1 ? "film" : "films"}. Your own point
+                    of view.
+                  </span>
                 </p>
               </div>
-              <div className="film-shelf" onMouseLeave={() => setHovered(null)}>
-                {films.slice(0, 7).map((film, index) => (
-                  <motion.button
-                    key={film.id}
-                    data-film-id={film.id}
-                    className={`film-strip ${hovered === film.id ? "is-active" : ""}`}
-                    initial={
-                      reduceMotion
-                        ? false
-                        : {
-                            opacity: 0,
-                            y: 90,
-                            clipPath: "inset(100% 0% 0% 0%)",
-                          }
-                    }
-                    animate={{
-                      opacity: 1,
-                      y: 0,
-                      clipPath: "inset(0% 0% 0% 0%)",
-                    }}
-                    transition={{
-                      duration: reduceMotion ? 0 : 1.05,
-                      delay: reduceMotion ? 0 : 0.12 + index * 0.11,
-                      ease: [0.16, 1, 0.3, 1],
-                    }}
-                    onMouseEnter={() => setHovered(film.id)}
-                    onFocus={() => setHovered(film.id)}
-                    onBlur={() => setHovered(null)}
-                    onClick={() => openFilm(film)}
-                    aria-label={`Explore ${film.title}`}
-                  >
-                    <Image
-                      src={film.image}
-                      alt={`${film.title} theatrical poster`}
-                      quality={90}
-                      fill
-                      sizes="(max-width: 640px) 45vw, 20vw"
-                      priority
-                    />
-                    <span className="strip-shade" />
-                    <span className="strip-number">0{index + 1}</span>
-                    <span className="strip-cta">
-                      <ArrowUpRight size={23} />
-                    </span>
-                    <span className="strip-caption">
-                      <span>{film.title}</span>
-                      <small>
-                        {film.year} <span>·</span> {runtime(film.duration)}
-                      </small>
-                    </span>
-                  </motion.button>
-                ))}
-              </div>
+              {!loaded ? (
+                <div
+                  className="focus-empty"
+                  role={loadError ? "alert" : "status"}
+                >
+                  {loadError ? (
+                    <>
+                      <p>Your collection couldn’t load.</p>
+                      <button
+                        className="primary-button"
+                        onClick={() => void loadLibrary()}
+                      >
+                        Try again
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <LoaderCircle className="spin" />
+                      <p>Loading your saved films…</p>
+                    </>
+                  )}
+                </div>
+              ) : !focusFilms.length ? (
+                <div className="focus-empty">
+                  <Bookmark size={32} />
+                  <h2>Your collection starts with one film.</h2>
+                  <p>
+                    Save films to your list and they’ll appear here, in your own
+                    In Focus.
+                  </p>
+                  <Link className="primary-button" href="/browse">
+                    Find films to add <ArrowUpRight size={15} />
+                  </Link>
+                  <Link href="/account">Manage your profile</Link>
+                </div>
+              ) : (
+                <div
+                  className="film-shelf personal-film-shelf"
+                  onMouseLeave={() => setHovered(null)}
+                >
+                  {focusFilms.map((film, index) => (
+                    <motion.button
+                      key={film.id}
+                      data-film-id={film.id}
+                      className={`film-strip ${hovered === film.id ? "is-active" : ""}`}
+                      initial={
+                        reduceMotion
+                          ? false
+                          : {
+                              opacity: 0,
+                              y: 90,
+                              clipPath: "inset(100% 0% 0% 0%)",
+                            }
+                      }
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                        clipPath: "inset(0% 0% 0% 0%)",
+                      }}
+                      transition={{
+                        duration: reduceMotion ? 0 : 1.05,
+                        delay: reduceMotion
+                          ? 0
+                          : 0.12 + Math.min(index, 6) * 0.11,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
+                      onMouseEnter={() => setHovered(film.id)}
+                      onFocus={() => setHovered(film.id)}
+                      onBlur={() => setHovered(null)}
+                      onClick={() => openFilm(film)}
+                      aria-label={`Explore ${film.title}`}
+                    >
+                      <Image
+                        src={film.image}
+                        alt={`${film.title} theatrical poster`}
+                        quality={90}
+                        fill
+                        sizes="(max-width: 640px) 45vw, 20vw"
+                        priority={index < 7}
+                      />
+                      <span className="strip-shade" />
+                      <span className="strip-number">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <span className="strip-cta">
+                        <ArrowUpRight size={23} />
+                      </span>
+                      <span className="strip-caption">
+                        <span>{film.title}</span>
+                        <small>
+                          {film.year} <span>·</span> {runtime(film.duration)}
+                        </small>
+                      </span>
+                    </motion.button>
+                  ))}
+                </div>
+              )}
               <div className="shelf-footer">
                 <div className="shelf-status">
                   <span className="tiny-cross">+</span>
@@ -372,16 +432,16 @@ export default function Cinema({ films }: { films: Film[] }) {
                   </span>
                 </div>
                 <button onClick={() => openPanel("catalog")}>
-                  Explore the collection <ArrowUpRight size={13} />
+                  Add films to your list <ArrowUpRight size={13} />
                 </button>
               </div>
               <div className="director-type" aria-hidden="true">
-                Gaurav
+                {name}
               </div>
               <div className="collection-footnote">
-                <span>CURATED, NOT GENERATED.</span>
-                <span>01 — 07</span>
-                <span>SCROLL LESS. FEEL MORE.</span>
+                <Link href="/account">YOUR PROFILE</Link>
+                <span>{focusFilms.length} FILMS SAVED</span>
+                <Link href="/dashboard">YOUR DASHBOARD</Link>
               </div>
             </motion.section>
           ) : (
@@ -555,20 +615,25 @@ export default function Cinema({ films }: { films: Film[] }) {
                   <Play size={18} />
                 </button>
               </div>
-              <button
-                className="next-film"
-                onClick={() =>
-                  openFilm(
-                    films[
-                      (films.findIndex((film) => film.id === selected.id) + 1) %
-                        films.length
-                    ],
-                  )
-                }
-              >
-                <span>NEXT IN THE COLLECTION</span>
-                <ArrowRight size={19} />
-              </button>
+              {focusFilms.length > 1 && (
+                <button
+                  className="next-film"
+                  onClick={() =>
+                    openFilm(
+                      focusFilms[
+                        (focusFilms.findIndex(
+                          (film) => film.id === selected.id,
+                        ) +
+                          1) %
+                          focusFilms.length
+                      ],
+                    )
+                  }
+                >
+                  <span>NEXT IN THE COLLECTION</span>
+                  <ArrowRight size={19} />
+                </button>
+              )}
             </motion.section>
           )}
         </AnimatePresence>
@@ -886,8 +951,13 @@ export default function Cinema({ films }: { films: Film[] }) {
             )}
             <p className="profile-note">
               <CircleHelp size={13} />
-              Guest profile · No sign-up needed for the preview.
+              {email
+                ? `Signed in as ${email}`
+                : "Guest profile · Create an account to sync across devices."}
             </p>
+            <Link className="primary-button" href="/account">
+              Manage full profile <ArrowUpRight size={15} />
+            </Link>
           </Modal>
         )}
 
@@ -914,10 +984,10 @@ export default function Cinema({ films }: { films: Film[] }) {
             <div className="about-feature">
               <Clapperboard size={22} />
               <div>
-                <h3>In focus: Gaurav</h3>
+                <h3>Your personal In Focus</h3>
                 <p>
-                  From the quiet mystery of Arrival to the vast landscapes of
-                  Dune, explore seven films from a visionary storyteller.
+                  Every film saved to your list appears in your own collection,
+                  linked to your profile and dashboard.
                 </p>
               </div>
             </div>

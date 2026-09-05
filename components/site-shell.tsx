@@ -27,6 +27,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
         <nav aria-label="Site navigation">
           {[
             ["/", "Home"],
+            ["/dashboard", "Dashboard"],
             ["/browse", "Films"],
             ["/collection", "In focus"],
             ["/support", "Support"],
@@ -56,7 +57,8 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
         </div>
         <nav aria-label="Footer navigation">
           <Link href="/browse">Explore films</Link>
-          <Link href="/#collection">The collection</Link>
+          <Link href="/collection">In Focus</Link>
+          <Link href="/dashboard">Dashboard</Link>
           <Link href="/library">My list</Link>
           <Link href="/account">Your profile</Link>
           <Link href="/support">Help center</Link>

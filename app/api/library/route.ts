@@ -1,12 +1,13 @@
 import { viewer, sameOrigin, apiError } from "@/lib/session";
 import { query } from "@/lib/db";
 import { getFilm } from "@/lib/catalog";
+import { profilePreferences } from "@/lib/profile";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const user = await viewer();
-    const [saved, progress] = await Promise.all([
+    const [saved, progress, preferences] = await Promise.all([
       query<{ film_id: string }>(
         "SELECT film_id FROM watchlist WHERE viewer_id = $1 ORDER BY created_at DESC",
         [user.id],
@@ -15,9 +16,16 @@ export async function GET() {
         "SELECT film_id, seconds, duration FROM progress WHERE viewer_id = $1 ORDER BY updated_at DESC",
         [user.id],
       ),
+      profilePreferences(user.id),
     ]);
     return Response.json(
-      { name: user.name, saved: saved.map((row) => row.film_id), progress },
+      {
+        name: user.name,
+        email: user.email,
+        saved: saved.map((row) => row.film_id),
+        progress,
+        preferences,
+      },
       { headers: { "Cache-Control": "private, no-store" } },
     );
   } catch (error) {

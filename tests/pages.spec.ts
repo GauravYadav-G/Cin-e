@@ -1,5 +1,6 @@
 import { mockServerVideo } from "./stream-fixture";
 import { films } from "../lib/catalog";
+import { saveReferenceFilms } from "./focus-fixture";
 import { test, expect } from "@playwright/test";
 
 test("home connects the full discovery flow and preserves old film URLs", async ({
@@ -8,6 +9,7 @@ test("home connects the full discovery flow and preserves old film URLs", async 
   await page.setViewportSize({ width: 1440, height: 1000 });
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  await saveReferenceFilms(page);
   await page.goto("/");
   await expect(
     page.getByRole("heading", { name: "Some stories stay with you." }),
@@ -35,7 +37,7 @@ test("home connects the full discovery flow and preserves old film URLs", async 
     page.getByRole("heading", { name: "Some stories stay with you." }),
   ).toBeVisible();
   await page
-    .getByRole("link", { name: "Enter the collection", exact: true })
+    .getByRole("link", { name: "Enter your collection", exact: true })
     .click();
   await expect(page.locator(".film-strip")).toHaveCount(7);
   await page.goto("/?film=arrival");

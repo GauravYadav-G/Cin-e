@@ -4,6 +4,11 @@ CREATE TABLE IF NOT EXISTS viewers (
   name TEXT NOT NULL DEFAULT 'Film lover',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS profile_preferences (
+  viewer_id TEXT PRIMARY KEY REFERENCES viewers(id) ON DELETE CASCADE,
+  bio TEXT NOT NULL DEFAULT '', favorite_genres TEXT NOT NULL DEFAULT '[]',
+  avatar TEXT NOT NULL DEFAULT 'amber'
+);
 CREATE TABLE IF NOT EXISTS watchlist (
   viewer_id TEXT NOT NULL REFERENCES viewers(id) ON DELETE CASCADE,
   film_id TEXT NOT NULL,
@@ -26,4 +31,15 @@ CREATE TABLE IF NOT EXISTS support_requests (
   message TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'saved',
   created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS accounts (
+  email TEXT PRIMARY KEY, viewer_id TEXT NOT NULL UNIQUE REFERENCES viewers(id) ON DELETE CASCADE,
+  password_hash TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS auth_sessions (
+  token_hash TEXT PRIMARY KEY, viewer_id TEXT NOT NULL REFERENCES viewers(id) ON DELETE CASCADE,
+  expires_at BIGINT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS auth_limits (
+  key TEXT PRIMARY KEY, attempts INTEGER NOT NULL, reset_at BIGINT NOT NULL
 );

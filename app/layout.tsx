@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import ArtworkTheme from "@/components/artwork-theme";
 import "./globals.css";
 import "./portal.css";
 export const metadata: Metadata = {
@@ -17,7 +18,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ArtworkTheme />
+        {children}
+      </body>
     </html>
   );
 }

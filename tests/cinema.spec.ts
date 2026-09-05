@@ -1,11 +1,13 @@
 import { mockServerVideo } from "./stream-fixture";
 import { films } from "../lib/catalog";
+import { saveReferenceFilms } from "./focus-fixture";
 import { test, expect } from "@playwright/test";
 
 test("reduced motion keeps gallery and film detail immediately usable", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
+  await saveReferenceFilms(page);
   await page.goto("/collection");
   const poster = page.getByRole("button", {
     name: "Explore Dune: Part Two",
@@ -32,9 +34,10 @@ test("reference gallery, hover, detail navigation and history", async ({
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  await saveReferenceFilms(page);
   await page.goto("/collection");
   await expect(
-    page.getByRole("heading", { name: "A mind. An entire universe." }),
+    page.getByRole("heading", { name: "Film lover’s In Focus." }),
   ).toBeVisible();
   await expect(page.locator(".film-strip")).toHaveCount(7);
   const dune = page.getByRole("button", {
@@ -188,6 +191,7 @@ test("mobile gallery, detail and search do not overflow the viewport", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await saveReferenceFilms(page);
   await page.goto("/collection");
   await expect(
     page.getByRole("button", { name: "Search films", exact: true }),

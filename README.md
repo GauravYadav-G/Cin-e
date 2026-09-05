@@ -41,11 +41,11 @@ Compatible MP4/WebM video streams support HTTP byte-range seeking. MKV/AVI/MOV/T
 
 ## Database
 
-Without `DATABASE_URL`, local development uses SQLite in `.data/cine.sqlite`. Set a PostgreSQL connection string in production and run `npm run db:migrate`. For an intentional local production preview, use `ALLOW_SQLITE_PREVIEW=true npm start` after `npm run build`. Guest profiles, watchlists, progress, and support requests remain connected to the browser’s session cookie.
+Without `DATABASE_URL`, local development uses SQLite in `.data/cine.sqlite`. Set a PostgreSQL connection string in production and run `npm run db:migrate`. For an intentional local production preview, use `ALLOW_SQLITE_PREVIEW=true npm start` after `npm run build`. Accounts, profile preferences, watchlists, progress, and support requests are stored in the database. A signed-in session resolves to the same viewer on every device. Existing guest data is retained when that guest registers.
 
 ## Pages
 
-Home (`/`), catalog (`/browse`), director collection (`/collection`), library (`/library`), profile (`/account`), About (`/about`), and support (`/support`) are connected. Film links use `/collection?film=<id>`; legacy `/?film=<id>` links redirect there. The support center includes guides, FAQs, saved requests, and close/reopen controls. Requests are stored locally; no support email integration is connected.
+Home (`/`), catalog (`/browse`), personal In Focus (`/collection`), dashboard (`/dashboard`), library (`/library`), profile (`/account`), About (`/about`), and support (`/support`) are connected. Film links use `/collection?film=<id>`; legacy `/?film=<id>` links redirect there. The support center includes guides, FAQs, saved requests, and close/reopen controls. Requests are stored locally; no support email integration is connected.
 
 ## Validation
 
@@ -63,3 +63,20 @@ The server tests generate their own video and seed it over a local TCP torrent c
 Implementation references: [WebTorrent server API](https://webtorrent.io/docs), [YouTube embeds](https://developers.google.com/youtube/player_parameters).
 
 See `DESIGN.md` for the original UI reference and `CREDITS.md` for asset credits.
+
+### Artwork-based colors
+
+The homepage follows its featured film, and the collection follows the hovered or opened film. Buttons, navigation icons, focus indicators, and dark surfaces use tonal colors derived with [Material Color Utilities](https://github.com/material-foundation/material-color-utilities). Other pages retain the last palette for the current browser session.
+
+`GET /api/theme/[film-id]` samples existing local artwork at 48 × 48 pixels in memory. Palettes are cached by file modification time and size, so replacing artwork invalidates its palette automatically. Source image files are never modified. Failed requests preserve the current theme, and reduced-motion settings disable color transitions.
+
+
+### Profiles, accounts, and personal collections
+
+`/account` supports registration, sign-in, sign-out, password changes, display names, bios, avatar colors, and favorite genres. `/dashboard` displays only the current viewer’s saved films and progress. `/collection` displays **all** films in that viewer’s saved list, with an empty state for new profiles. Film detail links remain available from the public catalog. The homepage links to the same personal collection and uses favorite genres for recommendations.
+
+Passwords use salted scrypt hashes; signed-in sessions use random HttpOnly tokens stored as hashes in the database, expire after 30 days, and are revoked on logout. Password changes revoke other sessions. Authentication attempts are rate limited by account identifier. Sessions are Secure in production, and write routes validate request origin. All viewer-owned queries resolve identity from the session rather than request bodies.
+
+Cross-device access requires both devices to reach the same running deployment and database. Configure PostgreSQL and run `npm run db:migrate` for deployment. Email verification and forgotten-password email recovery are not yet connected; no verification or recovery emails are sent. Existing guest profiles continue to work without registration.
+
+Run `npm test -- tests/profile-auth.spec.ts` for account isolation, cross-device restore, password/session lifecycle, profile editing, and personal dashboard/collection checks.

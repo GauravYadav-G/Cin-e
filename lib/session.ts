@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
 import { initDb, query } from "./db";
 
 export async function viewer() {
@@ -8,11 +8,17 @@ export async function viewer() {
   const jar = await cookies();
   const existing = jar.get("cine_session")?.value;
   if (existing && /^[a-f0-9]{64}$/.test(existing)) {
+    const [signedIn] = await query<{ id: string; name: string; email: string }>(
+      `SELECT v.id, v.name, a.email FROM auth_sessions s JOIN viewers v ON v.id = s.viewer_id
+       JOIN accounts a ON a.viewer_id = v.id WHERE s.token_hash = $1 AND s.expires_at > $2`,
+      [createHash("sha256").update(existing).digest("hex"), Date.now()],
+    );
+    if (signedIn) return signedIn;
     const found = await query<{ id: string; name: string }>(
-      "SELECT id, name FROM viewers WHERE id = $1",
+      "SELECT id, name FROM viewers WHERE id = $1 AND NOT EXISTS (SELECT 1 FROM accounts WHERE viewer_id = viewers.id)",
       [existing],
     );
-    if (found[0]) return found[0];
+    if (found[0]) return { ...found[0], email: null };
   }
   const id = randomBytes(32).toString("hex");
   await query("INSERT INTO viewers (id) VALUES ($1)", [id]);
@@ -23,7 +29,7 @@ export async function viewer() {
     maxAge: 60 * 60 * 24 * 365,
     secure: process.env.NODE_ENV === "production",
   });
-  return { id, name: "Film lover" };
+  return { id, name: "Film lover", email: null };
 }
 
 export function sameOrigin(request: Request) {

@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Pause, Play } from "lucide-react";
+import { ArrowUpRight, Play } from "lucide-react";
 import { useReducedMotion } from "motion/react";
-import { films, runtime } from "@/lib/catalog";
+import { films } from "@/lib/catalog";
+import { useArtworkTheme } from "./artwork-theme";
 
 const selection = [
   "dune-part-two",
@@ -32,6 +33,7 @@ export default function HomeHero() {
   const [error, setError] = useState("");
   const index = slots[activeSlot] ?? 0;
   const film = selection[index];
+  useArtworkTheme(film.id);
   const select = useCallback(
     (next: number) => {
       if (pending || next === index) return;
@@ -101,8 +103,7 @@ export default function HomeHero() {
               src={selection[filmIndex].backdrop}
               alt=""
               fill
-              quality={90}
-              sizes="100vw"
+              unoptimized
               priority={slot === 0 && filmIndex === 0}
               loading={slot === 0 && filmIndex === 0 ? undefined : "eager"}
               onLoad={async (event) => {
@@ -155,8 +156,8 @@ export default function HomeHero() {
         <span>FEATURED FILM</span>
         <strong>{film.title}</strong>
         <p>
-          {film.director || film.studio} <span>·</span> {film.year} <span>·</span>{" "}
-          {film.genres[0]}
+          {film.director || film.studio} <span>·</span> {film.year}{" "}
+          <span>·</span> {film.genres[0]}
         </p>
       </div>
       <div className="home-bottom-line">

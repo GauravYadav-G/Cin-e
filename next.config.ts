@@ -4,7 +4,10 @@ const config: NextConfig = {
   serverExternalPackages: ["pg"],
   poweredByHeader: false,
   devIndicators: false,
-  images: { qualities: [75, 90] },
+  images: {
+    qualities: [75, 90],
+    localPatterns: [{ pathname: "/images/**" }],
+  },
   async headers() {
     return [
       {

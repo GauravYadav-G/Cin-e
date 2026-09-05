@@ -28,6 +28,11 @@
   --text: #f2f1ed;
   --muted: #858582;
   --accent: #e8fa42;
+  --on-accent: #171d00;
+  --accent-hover: #f1ff7b;
+  --accent-container: #353f12;
+  --on-accent-container: #e5efa9;
+  --panel-raised: #20211b;
   --line: #ffffff16;
   --font: "DM Sans", Arial, Helvetica, sans-serif;
   color-scheme: dark;
@@ -117,8 +122,8 @@ button:hover {
 }
 
 button.primary-button:hover {
-  color: #080808;
-  background: #f0ff74;
+  color: var(--on-accent);
+  background: var(--accent-hover);
 }
 
 button.secondary-button:hover {
@@ -152,7 +157,7 @@ button.saved {
   height: 5px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 9px #e8fa4220;
+  box-shadow: 0 0 9px color-mix(in srgb, var(--accent) 12.55%, transparent);
 }
 
 .skip-link {
@@ -587,7 +592,7 @@ button.saved {
 
 .dock-brand {
   background: var(--accent);
-  color: #080808 !important;
+  color: var(--on-accent) !important;
   font-size: 29px;
   letter-spacing: -2px;
   font-weight: 800;
@@ -601,7 +606,7 @@ button.saved {
 }
 
 .dock-brand:hover {
-  background: #f1ff7b;
+  background: var(--accent-hover);
 }
 
 .dock-brand > span {
@@ -917,7 +922,7 @@ button.saved {
 
 .primary-button {
   background: var(--accent);
-  color: #0c0d05;
+  color: var(--on-accent);
 }
 
 .secondary-button {
@@ -1072,7 +1077,7 @@ button.saved {
 }
 
 .search-field:focus-within {
-  border-color: #e8fa4277;
+  border-color: color-mix(in srgb, var(--accent) 46.67%, transparent);
 }
 
 .search-field input {
@@ -1129,8 +1134,8 @@ button.saved {
 
 .genre-tabs button.active {
   color: var(--accent);
-  border-color: #e8fa4230;
-  background: #e8fa4208;
+  border-color: color-mix(in srgb, var(--accent) 18.82%, transparent);
+  background: color-mix(in srgb, var(--accent) 3.14%, transparent);
 }
 
 .genre-tabs button:hover {
@@ -1280,9 +1285,9 @@ button.saved {
 .profile-avatar {
   width: 58px;
   height: 58px;
-  background: #e8fa4212;
+  background: color-mix(in srgb, var(--accent) 7.06%, transparent);
   color: var(--accent);
-  border: 1px solid #e8fa4225;
+  border: 1px solid color-mix(in srgb, var(--accent) 14.51%, transparent);
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -1482,7 +1487,7 @@ button.saved {
   margin-left: auto;
   width: 38px;
   height: 38px;
-  background: #e8fa4208;
+  background: color-mix(in srgb, var(--accent) 3.14%, transparent);
   display: grid;
   place-items: center;
   border-radius: 50%;
@@ -1525,7 +1530,7 @@ button.saved {
 .toast {
   padding: 13px 16px;
   background: #25291f;
-  border: 1px solid #e8fa4230;
+  border: 1px solid color-mix(in srgb, var(--accent) 18.82%, transparent);
   box-shadow: 0 10px 30px #0007;
   backdrop-filter: blur(15px);
   color: #e8eddf;
@@ -2581,5 +2586,111 @@ button.saved {
   }
   .player-error h2 {
     font-size: 24px;
+  }
+}
+
+/* Artwork-derived Material tonal colors, shared across every page. */
+.dock {
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  border-color: var(--line);
+}
+.dock-icon,
+.dock-links {
+  background: var(--panel-raised);
+}
+.modal {
+  background: var(--panel);
+}
+.rating,
+.skip-link {
+  color: var(--on-accent);
+}
+.portal-dock .dock-current {
+  color: var(--on-accent-container);
+}
+.portal-header svg,
+.dock-icon svg,
+.icon-button svg,
+.secondary-button svg {
+  color: var(--accent);
+}
+.primary-button:hover {
+  background: var(--accent-hover);
+  color: var(--on-accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  body,
+  .portal-shell,
+  .dock,
+  .dock-brand,
+  .dock-icon,
+  .primary-button,
+  .rating,
+  .status-dot,
+  .director-feature,
+  .account-panel,
+  .account-stats,
+  .portal-header svg {
+    transition:
+      background-color 450ms ease,
+      color 450ms ease,
+      border-color 450ms ease;
+  }
+}
+
+.focus-empty {
+  position: relative;
+  z-index: 4;
+  margin: auto;
+  width: min(90%, 650px);
+  min-height: 315px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 18px;
+}
+.focus-empty h2 {
+  font-size: clamp(25px, 3vw, 37px);
+  font-weight: 400;
+  letter-spacing: -1px;
+}
+.focus-empty p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.focus-empty > a:last-child {
+  font-size: 12px;
+  color: var(--accent);
+}
+.personal-film-shelf {
+  overflow-x: auto;
+  overflow-y: clip;
+  padding: 30px 0;
+  box-sizing: content-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-container) transparent;
+}
+.personal-film-shelf .film-strip {
+  flex: 1 0 120px;
+  max-width: 220px;
+}
+.personal-film-shelf .film-strip.is-active {
+  flex-grow: 1.33;
+}
+.collection-heading h1 {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .personal-film-shelf .film-strip {
+    flex: 0 0 40%;
+  }
+  .focus-empty {
+    min-height: 380px;
+  }
+  .collection-footnote {
+    gap: 12px;
   }
 }

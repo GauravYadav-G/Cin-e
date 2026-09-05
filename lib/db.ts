@@ -8,7 +8,7 @@ type SqlValue = string | number | null;
 type DbGlobals = typeof globalThis & {
   cinePool?: Pool;
   cineSqlite?: DatabaseSync;
-  cineInit?: Promise<void>;
+  cineInitV3?: Promise<void>;
 };
 const globals = globalThis as DbGlobals;
 
@@ -47,7 +47,7 @@ export async function query<T extends Record<string, unknown>>(
 }
 
 export async function initDb() {
-  globals.cineInit ??= (async () => {
+  globals.cineInitV3 ??= (async () => {
     await query(`CREATE TABLE IF NOT EXISTS viewers (
       id TEXT PRIMARY KEY, name TEXT NOT NULL DEFAULT 'Film lover',
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -63,9 +63,25 @@ export async function initDb() {
       duration REAL NOT NULL DEFAULT 0 CHECK (duration >= 0),
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (viewer_id, film_id)
     )`);
+    await query(`CREATE TABLE IF NOT EXISTS profile_preferences (
+      viewer_id TEXT PRIMARY KEY REFERENCES viewers(id) ON DELETE CASCADE,
+      bio TEXT NOT NULL DEFAULT '', favorite_genres TEXT NOT NULL DEFAULT '[]',
+      avatar TEXT NOT NULL DEFAULT 'amber'
+    )`);
+    await query(`CREATE TABLE IF NOT EXISTS accounts (
+      email TEXT PRIMARY KEY, viewer_id TEXT NOT NULL UNIQUE REFERENCES viewers(id) ON DELETE CASCADE,
+      password_hash TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`);
+    await query(`CREATE TABLE IF NOT EXISTS auth_sessions (
+      token_hash TEXT PRIMARY KEY, viewer_id TEXT NOT NULL REFERENCES viewers(id) ON DELETE CASCADE,
+      expires_at BIGINT NOT NULL
+    )`);
+    await query(`CREATE TABLE IF NOT EXISTS auth_limits (
+      key TEXT PRIMARY KEY, attempts INTEGER NOT NULL, reset_at BIGINT NOT NULL
+    )`);
   })().catch((error) => {
-    globals.cineInit = undefined;
+    globals.cineInitV3 = undefined;
     throw error;
   });
-  return globals.cineInit;
+  return globals.cineInitV3;
 }
